@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Robot Monitorinq Paneli</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; margin-bottom: 30px; }
+
+        .simulation-box {
+            background: #222;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            overflow: hidden;
+            border: 4px solid #444;
+        }
+        canvas { display: block; margin: 0 auto; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 15px; border-bottom: 1px solid #eee; text-align: left; }
+        th { background-color: #007bff; color: white; text-transform: uppercase; font-size: 14px; }
+        tr:hover { background-color: #f8f9fa; }
+
+        .status-bad { color: #d9534f; font-weight: bold; background: #ffe6e5; padding: 5px 10px; border-radius: 4px; }
+        .status-good { color: #5cb85c; font-weight: bold; background: #e6ffed; padding: 5px 10px; border-radius: 4px; }
+
+        .btn-refresh {
+            display: inline-block; width: 180px; margin: 0 auto 20px; padding: 12px;
+            text-align: center; background: #343a40; color: white;
+            text-decoration: none; border-radius: 8px; transition: 0.3s;
+        }
+        .btn-refresh:hover { background: #000; transform: translateY(-2px); }
+        .center-btn { text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Conveyor Digital Twin Monitor</h1>
+
+    <div class="simulation-box">
+        <canvas id="conveyorCanvas" width="900" height="250"></canvas>
+    </div>
+
+    <div class="center-btn">
+        <a th:href="@{/dashboard}" class="btn-refresh">Yenilə (Refresh Data)</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Ad</th>
+            <th>X Pozisiyası</th>
+            <th>Vəziyyət</th>
+            <th>Robotun Qərarı</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="item : ${items}">
+            <td th:text="${item.id}">1</td>
+            <td th:text="${item.name}">Məhsul</td>
+            <td th:text="${item.positionX}">0.0</td>
+            <td th:class="${item.defective} ? 'status-bad' : 'status-good'"
+                th:text="${item.defective} ? 'XARAB' : 'SAĞLAM'"></td>
+            <td th:text="${item.robotDecision}">PASS</td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+
+<script th:inline="javascript">
+    const canvas = document.getElementById('conveyorCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const dbItems = /*[[${items}]]*/ [];
+
+    let offset = 0;
+    let robotArmY = 20;
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+
+        ctx.fillStyle = "#444";
+        ctx.fillRect(0, 180, canvas.width, 40);
+
+
+        ctx.strokeStyle = "#666";
+        ctx.lineWidth = 2;
+        for (let i = 0; i < canvas.width + 40; i += 40) {
+            ctx.beginPath();
+            ctx.moveTo((i + offset) % (canvas.width + 40) - 20, 180);
+            ctx.lineTo((i + offset) % (canvas.width + 40) - 20, 220);
+            ctx.stroke();
+        }
+
+
+        ctx.fillStyle = "#f1c40f";
+        ctx.fillRect(430, 0, 40, 20);
+        ctx.fillStyle = "#f39c12";
+        ctx.fillRect(445, 20, 10, robotArmY);
+        ctx.fillStyle = "#34495e";
+        ctx.fillRect(425, 20 + robotArmY, 50, 10);
+
+
+        let activeRobotAction = false;
+
+        dbItems.forEach((item, index) => {
+
+            let itemX = (offset * 1.5 + (index * 250)) % (canvas.width + 100) - 50;
+            let itemY = 140; // Standart hündürlük
+
+            let isBad = item.defective === true || item.isDefective === true;
+
+
+            if (isBad && itemX > 450) {
+
+                itemY += (itemX - 450) * 1.8;
+            }
+
+
+            if (itemX > -60 && itemX < canvas.width + 60 && itemY < canvas.height + 50) {
+                ctx.fillStyle = isBad ? "#e74c3c" : "#2ecc71";
+                ctx.fillRect(itemX, itemY, 50, 40);
+
+                ctx.fillStyle = "white";
+                ctx.font = "bold 11px Arial";
+                ctx.fillText("ID: " + item.id, itemX + 10, itemY + 25);
+
+                // Robotun hərəkətə keçmə şərti
+                if (isBad && itemX > 410 && itemX < 460) {
+                    activeRobotAction = true;
+                }
+            }
+        });
+
+
+        if (activeRobotAction) {
+            if (robotArmY < 115) robotArmY += 7;
+        } else {
+            if (robotArmY > 20) robotArmY -= 3;
+        }
+
+        offset += 1.5;
+        requestAnimationFrame(draw);
+    }
+
+    draw();
+</script>
+
+</body>
+</html>
