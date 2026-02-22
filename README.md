@@ -17,6 +17,3 @@ Layihənin mərkəzi məntiqi `ConveyorService` tərəfindən idarə olunur:
 * **Defekt Analizi:** Məhsulun keyfiyyət göstəriciləri yoxlanılır (`isDefective`).
 * **Robotik Qərar:** Əgər məhsul qüsurludursa, sistem konveyerin sürətinə və məhsulun mövqeyinə əsasən robotun onu götürməli olduğu dəqiq koordinatı (`PICK_AT`) hesablayır.
 
-## 🏗 Quraşdırma
-1. Repozitoriyanı klonlayın: `git clone https://github.com/Mirzayev42/conveyor-twin-logic.git`
-2. `./gradlew bootRun` komandası ilə işə salın.
